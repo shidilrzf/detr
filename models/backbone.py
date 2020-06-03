@@ -13,6 +13,7 @@ from torchvision.models._utils import IntermediateLayerGetter
 from util.misc import NestedTensor
 
 from .position_encoding import build_position_encoding
+from .resnet import ResNet, Bottleneck
 
 
 class FrozenBatchNorm2d(torch.nn.Module):
@@ -83,10 +84,17 @@ class Backbone(BackboneBase):
                  train_backbone: bool,
                  return_interm_layers: bool,
                  dilation: bool):
-        backbone = getattr(torchvision.models, name)(
-            replace_stride_with_dilation=[False, False, dilation],
-            pretrained=True, norm_layer=FrozenBatchNorm2d)
-        num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
+        if name == 'ResNet50':
+            backbone = ResNet(Bottleneck, [3, 4, 6, 3],
+                              radix=2, groups=1, bottleneck_width=64,
+                              deep_stem=True, stem_width=32, avg_down=True,
+                              avd=True, avd_first=False)
+            num_channels = 2048
+        else:
+            backbone = getattr(torchvision.models, name)(
+                replace_stride_with_dilation=[False, False, dilation],
+                pretrained=True, norm_layer=FrozenBatchNorm2d)
+            num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
         super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
 
 
