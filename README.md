@@ -188,6 +188,10 @@ Horizontal flips, scales an crops are used for augmentation.
 Images are rescaled to have min size 800 and max size 1333.
 The transformer is trained with dropout of 0.1, and the whole model is trained with grad clip of 0.1.
 
+For changing the backbone to "ResNet50":
+```
+python -m torch.distributed.launch --nproc_per_node=8 --use_env main.py  --backbone 'ResNet50' --coco_path /path/to/coco
+```
 
 ## Evaluation
 To evaluate DETR R50 on COCO val5k with a single GPU run:
