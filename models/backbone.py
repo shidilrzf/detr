@@ -84,17 +84,13 @@ class Backbone(BackboneBase):
                  train_backbone: bool,
                  return_interm_layers: bool,
                  dilation: bool):
-        if name == 'ResNet50':
-            backbone = ResNet(Bottleneck, [3, 4, 6, 3],
-                              radix=2, groups=1, bottleneck_width=64,
-                              deep_stem=True, stem_width=32, avg_down=True,
-                              avd=True, avd_first=False)
-            num_channels = 2048
+        if name == 'resnest50':
+            backbone = torch.hub.load('zhanghang1989/ResNeSt', 'resnest50', pretrained=True)
         else:
             backbone = getattr(torchvision.models, name)(
                 replace_stride_with_dilation=[False, False, dilation],
                 pretrained=True, norm_layer=FrozenBatchNorm2d)
-            num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
+        num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
         super().__init__(backbone, train_backbone, num_channels, return_interm_layers)
 
 
