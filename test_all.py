@@ -4,7 +4,11 @@ import unittest
 import torch
 
 from models.matcher import HungarianMatcher
+from models.position_encoding import PositionEmbeddingSine, PositionEmbeddingLearned
+from models.backbone import Backbone, Joiner, BackboneBase
 from util import box_ops
+from util.misc import nested_tensor_from_tensor_list
+from hubconf import detr_resnet50, detr_resnet50_panoptic
 
 
 class Tester(unittest.TestCase):
@@ -46,6 +50,33 @@ class Tester(unittest.TestCase):
         indices = matcher({'pred_logits': logits.repeat(2, 1, 1),
                            'pred_boxes': boxes.repeat(2, 1, 1)}, targets_empty * 2)
         self.assertEqual(len(indices[0][0]), 0)
+
+    def test_position_encoding_script(self):
+        m1, m2 = PositionEmbeddingSine(), PositionEmbeddingLearned()
+        mm1, mm2 = torch.jit.script(m1), torch.jit.script(m2)  # noqa
+
+    def test_backbone_script(self):
+        backbone = Backbone('resnet50', True, False, False)
+        torch.jit.script(backbone)  # noqa
+
+    def test_model_script_detection(self):
+        model = detr_resnet50(pretrained=False).eval()
+        scripted_model = torch.jit.script(model)
+        x = nested_tensor_from_tensor_list([torch.rand(3, 200, 200), torch.rand(3, 200, 250)])
+        out = model(x)
+        out_script = scripted_model(x)
+        self.assertTrue(out["pred_logits"].equal(out_script["pred_logits"]))
+        self.assertTrue(out["pred_boxes"].equal(out_script["pred_boxes"]))
+
+    def test_model_script_panoptic(self):
+        model = detr_resnet50_panoptic(pretrained=False).eval()
+        scripted_model = torch.jit.script(model)
+        x = nested_tensor_from_tensor_list([torch.rand(3, 200, 200), torch.rand(3, 200, 250)])
+        out = model(x)
+        out_script = scripted_model(x)
+        self.assertTrue(out["pred_logits"].equal(out_script["pred_logits"]))
+        self.assertTrue(out["pred_boxes"].equal(out_script["pred_boxes"]))
+        self.assertTrue(out["pred_masks"].equal(out_script["pred_masks"]))
 
 
 if __name__ == '__main__':
