@@ -166,7 +166,11 @@ def main(args):
 
     if args.frozen_weights is not None:
         checkpoint = torch.load(args.frozen_weights, map_location='cpu')
-        model_without_ddp.detr.load_state_dict(checkpoint['model'])
+        if args.dataset_file == 'coco_panoptic':
+            # strip out the mask head from the checkpoint so it may be trained separately.
+            model_without_ddp.detr.load_state_dict({k[len("detr."):]: v for k, v in checkpoint['model'].items() if "detr." in k})
+        else:
+            model_without_ddp.detr.load_state_dict(checkpoint['model'])
 
     output_dir = Path(args.output_dir)
     if args.resume:

@@ -1,0 +1,12 @@
+python -m torch.distributed.launch \
+ --nproc_per_node=8 \
+ --use_env main.py \
+ --batch_size 1 \
+ --no_aux_loss \
+ --frozen_weights weights/detr-r50-panoptic-00ce5173.pth \
+ --coco_path /home/rezaeifa/Python/pytorch/data/coco/ \
+ --masks \
+ --coco_panoptic_path /home/rezaeifa/Python/pytorch/data/coco/ \
+ --dataset_file coco_panoptic \
+ --output_dir /home/rezaeifa/external/detr/output/20200626_213606/
+
